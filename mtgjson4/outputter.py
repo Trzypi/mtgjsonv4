@@ -140,7 +140,7 @@ def create_all_cards(files_to_ignore: List[str]) -> Dict[str, Any]:
     for set_file in mtgjson4.COMPILED_OUTPUT_DIR.glob("*.json"):
         if set_file.name[:-5] in files_to_ignore:
             continue
-
+        LOGGER.info(set_file.name)
         with set_file.open("r", encoding="utf-8") as f:
             file_content = json.load(f)
 

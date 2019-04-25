@@ -2,7 +2,9 @@
 import contextvars
 import copy
 import logging
+import re
 from typing import List, NamedTuple, Optional
+import random
 
 import bs4
 from mtgjson4 import util
@@ -11,6 +13,7 @@ LOGGER = logging.getLogger(__name__)
 SESSION: contextvars.ContextVar = contextvars.ContextVar("SESSION_GATHERER")
 
 GATHERER_CARD = "http://gatherer.wizards.com/Pages/Card/Details.aspx"
+GATHERER_SEARCH = "https://gatherer.wizards.com/Pages/Search/Default.aspx"
 
 SYMBOL_MAP = {
     "White": "W",
@@ -72,9 +75,29 @@ def get_cards(multiverse_id: str) -> List[GathererCard]:
     )
     LOGGER.info("Retrieved: %s", response.url)
     session.close()
-
     return parse_cards(response.text)
 
+def get_card_multiverse_id(name: str, set_name: str) -> Optional[int]:
+    num = random.randint(1,10001);
+    LOGGER.info("NUM: %s, CARD: %s, SET: %s", num, name, set_name)
+    session = util.get_generic_session()
+    response = session.get(
+        url=GATHERER_SEARCH,
+        params={"name": "+[\""+name+"\"]", "set": "[\""+set_name+"\"]"},
+        timeout=8.0,
+        allow_redirects=False,
+    )
+    LOGGER.info("NUM: %s, Retrieved Id: %s", num, response.url)
+    session.close()
+    if "Location" in response.headers:
+        LOGGER.info("TRYING TO OBTAIN MULTIVERSE ID")
+        LOGGER.info("NUM: %s, LOCATION: %s", num, response.headers["Location"])
+        match = re.match("/Pages/Card/Details\.aspx\?multiverseid=(\d+)", response.headers["Location"])
+        LOGGER.info(match)
+        if match is not None:
+            LOGGER.info("NUM: %s, MATCHING ID FOUND: %s", num, match.group(1))
+            return int(match.group(1))
+    return None
 
 def parse_cards(gatherer_data: str) -> List[GathererCard]:
     """Parse all cards from a given gatherer page."""

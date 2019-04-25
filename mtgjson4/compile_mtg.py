@@ -5,7 +5,7 @@ import json
 import logging
 import multiprocessing
 import re
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple, Optional
 import uuid
 
 import mtgjson4
@@ -618,7 +618,7 @@ def build_mtgjson_card(
         try:
             mtgjson_card["multiverseId"] = sf_card["multiverse_ids"][0]  # int
         except IndexError:
-            mtgjson_card["multiverseId"] = None  # int
+            mtgjson_card["multiverseId"] = get_missing_multiverse_id(sf_card["name"], sf_card["set_name"])  # int
 
     # Characteristics that are shared to all sides of flip-type cards, that we don't have to modify
     mtgjson_card["artist"] = sf_card.get("artist")  # str
@@ -730,6 +730,7 @@ def build_mtgjson_card(
     )
 
     if mtgjson_card["multiverseId"] is not None:
+        LOGGER.info("GET GATHERER INFO FOR %s (id: %s)", mtgjson_card["name"], mtgjson_card["multiverseId"])
         gatherer_cards = gatherer.get_cards(mtgjson_card["multiverseId"])
         try:
             gatherer_card = gatherer_cards[sf_card_face]
@@ -742,3 +743,9 @@ def build_mtgjson_card(
 
     mtgjson_cards.append(mtgjson_card)
     return mtgjson_cards
+
+def get_missing_multiverse_id(card_name: str, set_name: str) -> Optional[int]:
+    multiverse_id = gatherer.get_card_multiverse_id(card_name, set_name)
+    if multiverse_id is None:
+        return None
+    return multiverse_id
