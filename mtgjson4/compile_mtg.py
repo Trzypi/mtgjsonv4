@@ -663,9 +663,15 @@ def build_mtgjson_card(
 
     # Characteristics that we need custom functions to parse
     print_search_url: str = sf_card["prints_search_uri"].replace("%22", "")
+    if sf_card["set"] == "mh1":
+       sf_card["legalities"]["modern"] = "legal"
+       sf_card["legalities"]["legacy"] = "legal"
+       sf_card["legalities"]["vintage"] = "legal"
     mtgjson_card["legalities"] = scryfall.parse_legalities(
         sf_card["legalities"]
     )  # Dict[str, str]
+
+
     mtgjson_card["rulings"] = sorted(
         scryfall.parse_rulings(sf_card["rulings_uri"]),
         key=lambda ruling: ruling["date"],
