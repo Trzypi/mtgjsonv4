@@ -618,7 +618,8 @@ def build_mtgjson_card(
         try:
             mtgjson_card["multiverseId"] = sf_card["multiverse_ids"][0]  # int
         except IndexError:
-            mtgjson_card["multiverseId"] = get_missing_multiverse_id(sf_card["name"], sf_card["set_name"])  # int
+            if sf_card["lang"] == "en":
+                mtgjson_card["multiverseId"] = get_missing_multiverse_id(sf_card["name"], sf_card["set_name"])  # int
 
     # Characteristics that are shared to all sides of flip-type cards, that we don't have to modify
     mtgjson_card["artist"] = sf_card.get("artist")  # str
@@ -735,7 +736,7 @@ def build_mtgjson_card(
         print_search_url, mtgjson_card["name"], sf_card["set"]
     )
 
-    if mtgjson_card["multiverseId"] is not None:
+    if "multiverseId" in mtgjson_card:
         LOGGER.info("GET GATHERER INFO FOR %s (id: %s)", mtgjson_card["name"], mtgjson_card["multiverseId"])
         gatherer_cards = gatherer.get_cards(mtgjson_card["multiverseId"])
         try:
